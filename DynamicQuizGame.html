@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+   
+    <title>Dynamic Quiz Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color:lightblue;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; 
+        }
+        #app {
+            max-width: 650px;
+            width: 100%; 
+            margin: auto;
+            padding: 20px;
+            background:     yellow;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 2px solid lightblue; 
+            border-radius: 4px; 
+        }
+        button {
+            padding: 10px 15px;
+            margin-top: 10px;
+        }
+        #progressBar {
+            height: 5px;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="auth">
+            <h2>Login / Signup</h2>
+            <form id="authForm">
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit" style="border: 2px solid lightblue; border-radius: 4px;">Login</button>
+                <button type="button" id="switchToSignup" style="border: 2px solid lightblue; border-radius: 4px;">Signup</button>
+            </form>
+        </div>
+        <div id="quiz" style="display:none;">
+            <h2>Quiz</h2>
+            <div id="questionContainer"></div>
+            <button id="nextBtn" style="display:none;">Next Question</button>
+            <div id="scoreContainer" style="display:none;"></div>
+            <div id="progressBar"></div>
+        </div>
+    </div>
+    <script>
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let currentUser = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const questions = [
+            { question: "What's the capital of France?", answers: ["Berlin", "Madrid", "Paris", "Lisbon"], correct: 2 },
+            { question: "What is 2 + 2?", answers: ["3", "4", "5", "6"], correct: 1 },
+            { question: "What is the capital of Japan?", answers: ["Tokyo", "Seoul", "Beijing", "Bangkok"], correct: 0 }
+        ];
+
+        document.getElementById('authForm').addEventListener('submit', handleLogin);
+        document.getElementById('switchToSignup').addEventListener('click', handleSignup);
+        document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth').style.display = 'none';
+                startQuiz();
+            } else {
+                alert('Invalid credentials');
+            }
+        }
+
+        function handleSignup() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (users.find(u => u.email === email)) {
+                alert('User already exists');
+                return;
+            }
+
+            users.push({ email, password });
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('User registered successfully! You can now login.');
+        }
+
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0; 
+            score = 0; 
+            shuffleQuestions(); // Shuffle questions for randomness
+            document.getElementById('quiz').style.display = 'block';
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                endQuiz();
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            const questionContainer = document.getElementById('questionContainer');
+            questionContainer.innerHTML = `<h3>${question.question}</h3>`;
+            question.answers.forEach((answer, index) => {
+                questionContainer.innerHTML += `<button onclick="checkAnswer(${index})">${answer}</button>`;
+            });
+
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        function checkAnswer(selectedIndex) {
+            const question = questions[currentQuestionIndex];
+            if (selectedIndex === question.correct) {
+                score++;
+                alert('Correct!');
+            } else {
+                alert('Wrong!');
+            }
+
+            currentQuestionIndex++;
+            document.getElementById('nextBtn').style.display = 'block';
+            document.getElementById('progressBar').style.width = `${((currentQuestionIndex / questions.length) * 100)}%`;
+        }
+
+        function nextQuestion() {
+            displayQuestion();
+        }
+
+        function endQuiz() {
+            document.getElementById('quiz').style.display = 'none';
+            const scoreContainer = document.getElementById('scoreContainer');
+            scoreContainer.style.display = 'block';
+            scoreContainer.innerHTML = `<h3>Your score: ${score} / ${questions.length}</h3>
+                                        <p>Each question carries 1 mark.</p>`;
+        }
+    </script>
+</body>
+</html>
